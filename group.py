@@ -1,12 +1,6 @@
-!pip install streamlit
-!pip install yfinance
-!pip install scikit-learn
-!pip install xgboost
-!pip install streamlit
 import streamlit as st
 import pandas as pd
 import yfinance as yf
-!pip install ta
 from ta.volatility import BollingerBands
 from ta.trend import MACD, EMAIndicator, SMAIndicator
 from ta.momentum import RSIIndicator
