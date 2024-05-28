@@ -126,6 +126,7 @@ def model_engine(model, num):
 
     return predicted_data
 
+
 def predict():
     model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor'])
     num = st.number_input('How many days forecast?', value=5)
