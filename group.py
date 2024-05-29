@@ -8,15 +8,7 @@ from ta.momentum import RSIIndicator
 from ta.volume import ChaikinMoneyFlowIndicator
 import datetime
 from datetime import date
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.neighbors import KNeighborsRegressor
-from xgboost import XGBRegressor
-from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
-from sklearn.metrics import r2_score, mean_absolute_error
-from pmdarima import auto_arima
-from prophet import Prophet
+import plotly.graph_objects as go
 
 # Set up the titles in Streamlit Application
 st.title('Predicting Future Stock Value')
@@ -55,7 +47,6 @@ if st.sidebar.button('Send'):
         st.sidebar.error('Error: End date must fall after start date')
 
 data = download_data(option, start_date, end_date)
-scaler = StandardScaler()
 
 # Showing technical indicators (Close price, Volume, BB, MACD, RSI, SMA, EMA, WMA, CMF)
 def tech_indicators():
@@ -73,50 +64,56 @@ def tech_indicators():
         'Chaikin Money Flow'
     ])
 
-    # Create a DataFrame to hold the indicators
-    indicators_df = pd.DataFrame(index=data.index)
+    # Create a plotly figure
+    fig = go.Figure()
 
-    # Calculating indicators
+    # Adding indicators to the plotly figure
     if 'Close Price' in indicators:
-        indicators_df['Close Price'] = data['Close']
+        fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name='Close Price'))
     
     if 'Volume' in indicators:
-        indicators_df['Volume'] = data['Volume']
+        fig.add_trace(go.Scatter(x=data.index, y=data['Volume'], mode='lines', name='Volume'))
 
     if 'Bollinger Bands' in indicators:
         bb_indicator = BollingerBands(data.Close)
-        indicators_df['Bollinger High'] = bb_indicator.bollinger_hband()
-        indicators_df['Bollinger Low'] = bb_indicator.bollinger_lband()
+        fig.add_trace(go.Scatter(x=data.index, y=bb_indicator.bollinger_hband(), mode='lines', name='Bollinger High'))
+        fig.add_trace(go.Scatter(x=data.index, y=bb_indicator.bollinger_lband(), mode='lines', name='Bollinger Low'))
 
     if 'Moving Average Convergence Divergence' in indicators:
-        indicators_df['MACD'] = MACD(data.Close).macd()
+        macd = MACD(data.Close).macd()
+        fig.add_trace(go.Scatter(x=data.index, y=macd, mode='lines', name='MACD'))
 
     if 'Relative Strength Indicator' in indicators:
-        indicators_df['RSI'] = RSIIndicator(data.Close).rsi()
+        rsi = RSIIndicator(data.Close).rsi()
+        fig.add_trace(go.Scatter(x=data.index, y=rsi, mode='lines', name='RSI'))
 
     if 'Simple Moving Average (SMA)' in indicators:
         sma_window = st.number_input('Enter SMA window:', min_value=1, value=50)
-        indicators_df[f'SMA ({sma_window})'] = SMAIndicator(data.Close, window=sma_window).sma_indicator()
+        sma = SMAIndicator(data.Close, window=sma_window).sma_indicator()
+        fig.add_trace(go.Scatter(x=data.index, y=sma, mode='lines', name=f'SMA ({sma_window})'))
 
     if 'Exponential Moving Average (EMA)' in indicators:
         ema_window = st.number_input('Enter EMA window:', min_value=1, value=50)
-        indicators_df[f'EMA ({ema_window})'] = EMAIndicator(data.Close, window=ema_window).ema_indicator()
+        ema = EMAIndicator(data.Close, window=ema_window).ema_indicator()
+        fig.add_trace(go.Scatter(x=data.index, y=ema, mode='lines', name=f'EMA ({ema_window})'))
 
     if 'Weighted Moving Average (WMA)' in indicators:
         wma_window = st.number_input('Enter WMA window:', min_value=1, value=50)
-        indicators_df[f'WMA ({wma_window})'] = WMAIndicator(data.Close, window=wma_window).wma()
+        wma = WMAIndicator(data.Close, window=wma_window).wma()
+        fig.add_trace(go.Scatter(x=data.index, y=wma, mode='lines', name=f'WMA ({wma_window})'))
 
     if 'Moving Average (MA)' in indicators:
         ma_window = st.number_input('Enter MA window:', min_value=1, value=50)
-        indicators_df[f'MA ({ma_window})'] = data['Close'].rolling(window=ma_window).mean()
+        ma = data['Close'].rolling(window=ma_window).mean()
+        fig.add_trace(go.Scatter(x=data.index, y=ma, mode='lines', name=f'MA ({ma_window})'))
 
     if 'Chaikin Money Flow' in indicators:
         cmf_window = st.number_input('Enter CMF window:', min_value=1, value=20)
-        indicators_df[f'CMF ({cmf_window})'] = ChaikinMoneyFlowIndicator(data.High, data.Low, data.Close, data.Volume, window=cmf_window).chaikin_money_flow()
+        cmf = ChaikinMoneyFlowIndicator(data.High, data.Low, data.Close, data.Volume, window=cmf_window).chaikin_money_flow()
+        fig.add_trace(go.Scatter(x=data.index, y=cmf, mode='lines', name=f'CMF ({cmf_window})'))
 
-    # Display the combined DataFrame with all selected indicators
-    st.write('Technical Indicators')
-    st.dataframe(indicators_df)
+    # Display the figure in Streamlit
+    st.plotly_chart(fig)
 
 # Showing recent data:
 def dataframe():
@@ -128,7 +125,6 @@ def model_engine(model, num):
     df = data[['Close']]
     df['preds'] = data.Close.shift(-num)
     x = df.drop(['preds'], axis=1).values
-    x = scaler.fit_transform(x)
     x_forecast = x[-num:]
     x = x[:-num]
     y = df.preds.values
@@ -140,14 +136,8 @@ def model_engine(model, num):
     st.text(f'r2_score: {r2_score(y_test, preds)} \nMAE: {mean_absolute_error(y_test, preds)}')
 
     forecast_pred = model.predict(x_forecast)
-    day = 1
-    predictions = []
-    for i in forecast_pred:
-        predictions.append(i)
-        day += 1
-
     forecast_dates = pd.date_range(end=end_date, periods=num + 1)[1:]
-    predicted_data = pd.DataFrame({'Date': forecast_dates, 'Predicted Price': predictions})
+    predicted_data = pd.DataFrame({'Date': forecast_dates, 'Predicted Price': forecast_pred})
 
     return predicted_data 
 
@@ -155,7 +145,6 @@ def model_engine(model, num):
 def predict():
     model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'ARIMA', 'PROPHET'])
     num = st.number_input('How many days do you want to forecast?', value=10)
-    num = int(num)
     if st.button('Predict'):
         if model == 'LinearRegression':
             engine = LinearRegression()
