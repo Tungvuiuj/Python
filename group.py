@@ -100,12 +100,23 @@ def dataframe():
     st.dataframe(data.tail(20))
 
 #Showing future value estimation:
+    # Checking downloading data
+data = download_data(option, start_date, end_date)
+if data.empty:
+    st.error('No data found for the selected stock and date range.')
+
+    # Normalizing data
+scaler = StandardScaler()
+
 def model_engine(model, num):
     df = data[['Close']]
     df['preds'] = data.Close.shift(-num)
     x = df.drop(['preds'], axis=1).values
     x = scaler.fit_transform(x)
+    st.write(x)  # Kiểm tra các giá trị sau khi chuẩn hóa
+
     x_forecast = x[-num:]
+    st.write(x_forecast)  # Kiểm tra các giá trị đầu vào cho dự đoán
     x = x[:-num]
     y = df.preds.values
     y = y[:-num]
@@ -113,9 +124,12 @@ def model_engine(model, num):
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=5)
     model.fit(x_train, y_train)
     preds = model.predict(x_test)
-    st.text(f'r2_score: {r2_score(y_test, preds)} \nMAE: {mean_absolute_error(y_test, preds)}')
+    st.write(f'r2_score: {r2_score(y_test, preds)} \nMAE: {mean_absolute_error(y_test, preds)}')
+    st.write(preds)  # Kiểm tra các giá trị dự đoán trên tập test
 
     forecast_pred = model.predict(x_forecast)
+    st.write(forecast_pred)  # Kiểm tra các giá trị dự đoán
+
     day = 1
     predictions = []
     for i in forecast_pred:
@@ -125,7 +139,7 @@ def model_engine(model, num):
     forecast_dates = pd.date_range(end=end_date, periods=num+1)[1:]
     predicted_data = pd.DataFrame({'Date': forecast_dates, 'Predicted Price': predictions})
 
-    return predicted_data
+    return predicted_data  
 
 #Creating interface for choosing learning model, prediction days,...
 def predict():
