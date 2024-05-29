@@ -15,9 +15,10 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.metrics import r2_score, mean_absolute_error
 
-st.title('Prediciting future stock value')
+
+st.title('Stock Price Predictions')
 st.sidebar.info('Welcome to the Stock Price Prediction App. Choose your options below')
-st.sidebar.info("Created and designed by [IUJ Group]")
+st.sidebar.info("Created and designed by [Gorilla Group]")
 
 def main():
     option = st.sidebar.selectbox('Make a choice', ['Visualize','Recent Data', 'Predict'])
@@ -28,9 +29,14 @@ def main():
     else:
         predict()
 
+
+
+@st.cache_resource
 def download_data(op, start_date, end_date):
     df = yf.download(op, start=start_date, end=end_date, progress=False)
     return df
+
+
 
 option = st.sidebar.text_input('Enter a Stock Symbol', value='SPY')
 option = option.upper()
@@ -45,6 +51,9 @@ if st.sidebar.button('Send'):
         download_data(option, start_date, end_date)
     else:
         st.sidebar.error('Error: End date must fall after start date')
+
+
+
 
 data = download_data(option, start_date, end_date)
 scaler = StandardScaler()
@@ -69,7 +78,6 @@ def tech_indicators():
     # EMA
     ema = EMAIndicator(data.Close).ema_indicator()
 
-
     if option == 'Close':
         st.write('Close Price')
         st.line_chart(data.Close)
@@ -86,28 +94,40 @@ def tech_indicators():
         st.write('Simple Moving Average')
         st.line_chart(sma)
     else:
-        st.write('Exponential Moving Average')
+        st.write('Expoenetial Moving Average')
         st.line_chart(ema)
+
 
 def dataframe():
     st.header('Recent Data')
     st.dataframe(data.tail(10))
 
+
 def model_engine(model, num):
+    # getting only the closing price
     df = data[['Close']]
+    # shifting the closing price based on number of days forecast
     df['preds'] = data.Close.shift(-num)
+    # scaling the data
     x = df.drop(['preds'], axis=1).values
     x = scaler.fit_transform(x)
+    # storing the last num_days data
     x_forecast = x[-num:]
+    # selecting the required values for training
     x = x[:-num]
+    # getting the preds column
     y = df.preds.values
+    # selecting the required values for training
     y = y[:-num]
 
+    #spliting the data
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=7)
+    # training the model
     model.fit(x_train, y_train)
     preds = model.predict(x_test)
-    st.text(f'r2_score: {r2_score(y_test, preds)} \nMAE: {mean_absolute_error(y_test, preds)}')
-
+    st.text(f'r2_score: {r2_score(y_test, preds)} \
+            \nMAE: {mean_absolute_error(y_test, preds)}')
+    # predicting stock price based on the number of days
     forecast_pred = model.predict(x_forecast)
     day = 1
     predictions = []
@@ -115,6 +135,7 @@ def model_engine(model, num):
         predictions.append(i)
         day += 1
 
+    # Create DataFrame for predicted prices
     forecast_dates = pd.date_range(end=end_date, periods=num+1)[1:]
     predicted_data = pd.DataFrame({'Date': forecast_dates, 'Predicted Price': predictions})
 
@@ -142,8 +163,15 @@ def predict():
             engine = XGBRegressor()
             predicted_data = model_engine(engine, num)
 
+        # Display metrics
+        st.text(f'r2_score: {r2_score(y_test, preds)} \
+                \nMAE: {mean_absolute_error(y_test, preds)}')
+
+        # Display predicted stock prices
         st.header('Predicted Stock Prices')
         st.line_chart(predicted_data.set_index('Date'))
 
+
 if __name__ == '__main__':
     main()
+       
