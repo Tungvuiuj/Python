@@ -68,28 +68,6 @@ def tech_indicators():
     if 'Close Price' in indicators:
         fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name='Close Price'))
 
-    # Plot Volume
-    if 'Volume' in indicators:
-        fig.add_trace(go.Scatter(x=data.index, y=data['Volume'], mode='lines', name='Volume', yaxis='y2'))
-
-    # Plot Bollinger Bands
-    if 'Bollinger Bands' in indicators:
-        bb_indicator = BollingerBands(data.Close)
-        data['bb_h'] = bb_indicator.bollinger_hband()
-        data['bb_l'] = bb_indicator.bollinger_lband()
-        fig.add_trace(go.Scatter(x=data.index, y=data['bb_h'], mode='lines', name='BB High'))
-        fig.add_trace(go.Scatter(x=data.index, y=data['bb_l'], mode='lines', name='BB Low'))
-
-    # Plot MACD
-    if 'Moving Average Convergence Divergence' in indicators:
-        data['macd'] = MACD(data.Close).macd()
-        fig.add_trace(go.Scatter(x=data.index, y=data['macd'], mode='lines', name='MACD'))
-
-    # Plot RSI
-    if 'Relative Strength Indicator' in indicators:
-        data['rsi'] = RSIIndicator(data.Close).rsi()
-        fig.add_trace(go.Scatter(x=data.index, y=data['rsi'], mode='lines', name='RSI'))
-
     # Plot SMA
     if 'Simple Moving Average (SMA)' in indicators:
         sma_window = st.number_input('Enter SMA window:', min_value=1, value=50)
@@ -114,16 +92,42 @@ def tech_indicators():
         data['ma'] = data['Close'].rolling(window=ma_window).mean()
         fig.add_trace(go.Scatter(x=data.index, y=data['ma'], mode='lines', name=f'MA {ma_window}'))
 
-    # Update layout for dual y-axis
-    fig.update_layout(
-        yaxis2=dict(
-            overlaying='y',
-            side='right',
-            showgrid=False
-        )
-    )
-
     st.plotly_chart(fig)
+
+    # Plot Volume in a separate chart
+    if 'Volume' in indicators:
+        st.write('Volume')
+        fig_vol = go.Figure()
+        fig_vol.add_trace(go.Scatter(x=data.index, y=data['Volume'], mode='lines', name='Volume'))
+        st.plotly_chart(fig_vol)
+
+    # Plot Bollinger Bands in a separate chart
+    if 'Bollinger Bands' in indicators:
+        st.write('Bollinger Bands')
+        bb_indicator = BollingerBands(data.Close)
+        data['bb_h'] = bb_indicator.bollinger_hband()
+        data['bb_l'] = bb_indicator.bollinger_lband()
+        fig_bb = go.Figure()
+        fig_bb.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name='Close Price'))
+        fig_bb.add_trace(go.Scatter(x=data.index, y=data['bb_h'], mode='lines', name='BB High'))
+        fig_bb.add_trace(go.Scatter(x=data.index, y=data['bb_l'], mode='lines', name='BB Low'))
+        st.plotly_chart(fig_bb)
+
+    # Plot MACD in a separate chart
+    if 'Moving Average Convergence Divergence' in indicators:
+        st.write('Moving Average Convergence Divergence')
+        data['macd'] = MACD(data.Close).macd()
+        fig_macd = go.Figure()
+        fig_macd.add_trace(go.Scatter(x=data.index, y=data['macd'], mode='lines', name='MACD'))
+        st.plotly_chart(fig_macd)
+
+    # Plot RSI in a separate chart
+    if 'Relative Strength Indicator' in indicators:
+        st.write('Relative Strength Indicator')
+        data['rsi'] = RSIIndicator(data.Close).rsi()
+        fig_rsi = go.Figure()
+        fig_rsi.add_trace(go.Scatter(x=data.index, y=data['rsi'], mode='lines', name='RSI'))
+        st.plotly_chart(fig_rsi)
 
 # Showing recent data:
 def dataframe():
