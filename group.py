@@ -133,6 +133,26 @@ def model_engine(model, num):
 
     return predicted_data  
 
+# ARIMA model
+def arima_model(num):
+    model = auto_arima(data['Close'], seasonal=False, stepwise=True)
+    forecast = model.predict(n_periods=num)
+    forecast_dates = pd.date_range(end=end_date, periods=num + 1)[1:]
+    predicted_data = pd.DataFrame({'Date': forecast_dates, 'Predicted Price': forecast})
+    return predicted_data
+
+# Prophet model
+def prophet_model(num):
+    df = data.reset_index()[['Date', 'Close']]
+    df.columns = ['ds', 'y']
+    model = Prophet(daily_seasonality=True)
+    model.fit(df)
+    future = model.make_future_dataframe(periods=num)
+    forecast = model.predict(future)
+    predicted_data = forecast[['ds', 'yhat']].tail(num)
+    predicted_data.columns = ['Date', 'Predicted Price']
+    return predicted_data
+
 #Creating interface for choosing learning model, prediction days,...
 def predict():
     model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor'])
