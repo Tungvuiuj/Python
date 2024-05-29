@@ -3,8 +3,9 @@ import streamlit as st
 import pandas as pd
 import yfinance as yf
 from ta.volatility import BollingerBands
-from ta.trend import MACD, EMAIndicator, SMAIndicator
+from ta.trend import MACD, EMAIndicator, SMAIndicator, WMAIndicator
 from ta.momentum import RSIIndicator
+from ta.volume import ChaikinMoneyFlowIndicator
 import datetime
 from datetime import date
 from sklearn.preprocessing import StandardScaler
@@ -55,10 +56,10 @@ if st.sidebar.button('Send'):
 data = download_data(option, start_date, end_date)
 scaler = StandardScaler()
 
-#Showing technical indicators (Close price,BB,MACD,RSI,SMA,EMA)
+#Showing technical indicators (Close price,BB,MACD,RSI,SMA,EMA,WMA,MA, Chaikin Money Flow)
 def tech_indicators():
     st.header('Technical Indicators')
-    option = st.radio('Choose a Technical Indicator to Visualize', ['Close Price', 'Bollinger Bands', 'Moving Average Convergence Divergence', 'Relative Strength Indicator', 'Simple Moving Average (50)', 'Exponential Moving Average (50)'])
+    option = st.radio('Choose a Technical Indicator to Visualize', ['Close Price', 'Bollinger Bands', 'Moving Average Convergence Divergence', 'Relative Strength Indicator', 'Simple Moving Average (SMA)', 'Exponential Moving Average (EMA)', 'Weighted Moving Average (WMA)', 'Moving Average (MA)', 'Chaikin Money Flow',])
 
     # Bollinger bands
     bb_indicator = BollingerBands(data.Close)
@@ -72,16 +73,31 @@ def tech_indicators():
     # RSI
     rsi = RSIIndicator(data.Close).rsi()
     # SMA
-    sma = SMAIndicator(data.Close, window=50).sma_indicator()
+    if option == 'Simple Moving Average (SMA)':
+        sma_window = st.number_input('Enter SMA window:', min_value=1, value=50)
+        sma = SMAIndicator(data.Close, window=sma_window).sma_indicator()
     # EMA
-    ema = EMAIndicator(data.Close, window=50).ema_indicator()
-
+    if option == 'Exponential Moving Average (EMA)':
+        ema_window = st.number_input('Enter EMA window:', min_value=1, value=50)
+        ema = EMAIndicator(data.Close, window=ema_window).ema_indicator()
+    # WMA
+    if option == 'Weighted Moving Average (WMA)':
+        wma_window = st.number_input('Enter WMA window:', min_value=1, value=50)
+        wma = WMAIndicator(data.Close, window=wma_window).wma()
+    # MA
+    if option == 'Moving Average (MA)':
+        ma_window = st.number_input('Enter MA window:', min_value=1, value=50)
+        ma = data['Close'].rolling(window=ma_window).mean()
+    # CMF
+    if option == 'Chaikin Money Flow':
+        cmf_window = st.number_input('Enter CMF window:', min_value=1, value=50)
+        cmf = ChaikinMoneyFlowIndicator(data.High, data.Low, data.Close, data.Volume, window=cmf_window).chaikin_money_flow()
 
     if option == 'Close Price':
         st.write('Close Price')
         st.line_chart(data.Close)
     elif option == 'Bollinger Bands':
-        st.write('BollingerBands')
+        st.write('Bollinger Bands')
         st.line_chart(bb)
     elif option == 'Moving Average Convergence Divergence':
         st.write('Moving Average Convergence Divergence')
@@ -89,13 +105,22 @@ def tech_indicators():
     elif option == 'Relative Strength Indicator':
         st.write('Relative Strength Indicator')
         st.line_chart(rsi)
-    elif option == 'Simple Moving Average (50)':
-        st.write('Simple Moving Average')
+    elif option == 'Simple Moving Average (SMA)':
+        st.write(f'Simple Moving Average ({sma_window})')
         st.line_chart(sma)
-    else:
-        st.write('Exponential Moving Average')
+    elif option == 'Exponential Moving Average (EMA)':
+        st.write(f'Exponential Moving Average ({ema_window})')
         st.line_chart(ema)
-
+    elif option == 'Weighted Moving Average (WMA)':
+        st.write(f'Weighted Moving Average ({wma_window})')
+        st.line_chart(wma)
+    elif option == 'Moving Average (MA)':
+        st.write(f'Moving Average ({ma_window})')
+        st.line_chart(ma)
+    elif option == 'Chaikin Money Flow':
+        st.write(f'Chaikin Money Flow ({cmf_window})')
+        st.line_chart(cmf)
+        
 #Showing recent data:
 def dataframe():
     st.header('Recent Data')
@@ -175,7 +200,6 @@ def predict():
         else:
             predicted_data = prophet_model(num)
         
-
         st.header('Predicted Stock Prices')
         st.line_chart(predicted_data.set_index('Date'))
 
