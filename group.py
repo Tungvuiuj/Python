@@ -97,7 +97,7 @@ def tech_indicators():
     if 'Close Price' in indicators:
         st.write('Close Price')
         st.line_chart(data.Close)
-        if 'Volume' in indicators:
+    if 'Volume' in indicators:
         st.write('Volume')
         st.line_chart(data.Volume)
     if 'Bollinger Bands' in indicators and bb is not None:
