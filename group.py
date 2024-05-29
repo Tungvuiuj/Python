@@ -17,6 +17,7 @@ from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
 from sklearn.metrics import r2_score, mean_absolute_error
 from pmdarima import auto_arima
 from prophet import Prophet
+import plotly.graph_objects as go
 
 # Set up the titles in Streamlit Application
 st.title('Welcome to the Predicting Future Stock Value Application')
@@ -61,65 +62,68 @@ def tech_indicators():
     st.header('Technical Indicators')
     indicators = st.multiselect('Choose Technical Indicators to Visualize', ['Close Price', 'Volume','Bollinger Bands', 'Moving Average Convergence Divergence', 'Relative Strength Indicator', 'Simple Moving Average (SMA)', 'Exponential Moving Average (EMA)', 'Weighted Moving Average (WMA)', 'Moving Average (MA)'])
 
-    # Calculating indicators
-    bb, macd, rsi, sma, ema, wma, ma = None, None, None, None, None, None, None
+    fig = go.Figure()
 
+    # Plot Close Price
+    if 'Close Price' in indicators:
+        fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name='Close Price'))
+
+    # Plot Volume
+    if 'Volume' in indicators:
+        fig.add_trace(go.Scatter(x=data.index, y=data['Volume'], mode='lines', name='Volume', yaxis='y2'))
+
+    # Plot Bollinger Bands
     if 'Bollinger Bands' in indicators:
         bb_indicator = BollingerBands(data.Close)
-        bb = data[['Close']].copy()
-        bb['bb_h'] = bb_indicator.bollinger_hband()
-        bb['bb_l'] = bb_indicator.bollinger_lband()
+        data['bb_h'] = bb_indicator.bollinger_hband()
+        data['bb_l'] = bb_indicator.bollinger_lband()
+        fig.add_trace(go.Scatter(x=data.index, y=data['bb_h'], mode='lines', name='BB High'))
+        fig.add_trace(go.Scatter(x=data.index, y=data['bb_l'], mode='lines', name='BB Low'))
 
+    # Plot MACD
     if 'Moving Average Convergence Divergence' in indicators:
-        macd = MACD(data.Close).macd()
+        data['macd'] = MACD(data.Close).macd()
+        fig.add_trace(go.Scatter(x=data.index, y=data['macd'], mode='lines', name='MACD'))
 
+    # Plot RSI
     if 'Relative Strength Indicator' in indicators:
-        rsi = RSIIndicator(data.Close).rsi()
+        data['rsi'] = RSIIndicator(data.Close).rsi()
+        fig.add_trace(go.Scatter(x=data.index, y=data['rsi'], mode='lines', name='RSI'))
 
+    # Plot SMA
     if 'Simple Moving Average (SMA)' in indicators:
         sma_window = st.number_input('Enter SMA window:', min_value=1, value=50)
-        sma = SMAIndicator(data.Close, window=sma_window).sma_indicator()
+        data['sma'] = SMAIndicator(data.Close, window=sma_window).sma_indicator()
+        fig.add_trace(go.Scatter(x=data.index, y=data['sma'], mode='lines', name=f'SMA {sma_window}'))
 
+    # Plot EMA
     if 'Exponential Moving Average (EMA)' in indicators:
         ema_window = st.number_input('Enter EMA window:', min_value=1, value=50)
-        ema = EMAIndicator(data.Close, window=ema_window).ema_indicator()
+        data['ema'] = EMAIndicator(data.Close, window=ema_window).ema_indicator()
+        fig.add_trace(go.Scatter(x=data.index, y=data['ema'], mode='lines', name=f'EMA {ema_window}'))
 
+    # Plot WMA
     if 'Weighted Moving Average (WMA)' in indicators:
         wma_window = st.number_input('Enter WMA window:', min_value=1, value=50)
-        wma = WMAIndicator(data.Close, window=wma_window).wma()
+        data['wma'] = WMAIndicator(data.Close, window=wma_window).wma()
+        fig.add_trace(go.Scatter(x=data.index, y=data['wma'], mode='lines', name=f'WMA {wma_window}'))
 
+    # Plot MA
     if 'Moving Average (MA)' in indicators:
         ma_window = st.number_input('Enter MA window:', min_value=1, value=50)
-        ma = data['Close'].rolling(window=ma_window).mean()
+        data['ma'] = data['Close'].rolling(window=ma_window).mean()
+        fig.add_trace(go.Scatter(x=data.index, y=data['ma'], mode='lines', name=f'MA {ma_window}'))
 
-    # Plotting selected indicators
-    if 'Close Price' in indicators:
-        st.write('Close Price')
-        st.line_chart(data.Close)
-    if 'Volume' in indicators:
-        st.write('Volume')
-        st.line_chart(data.Volume)
-    if 'Bollinger Bands' in indicators and bb is not None:
-        st.write('Bollinger Bands')
-        st.line_chart(bb)
-    if 'Moving Average Convergence Divergence' in indicators and macd is not None:
-        st.write('Moving Average Convergence Divergence')
-        st.line_chart(macd)
-    if 'Relative Strength Indicator' in indicators and rsi is not None:
-        st.write('Relative Strength Indicator')
-        st.line_chart(rsi)
-    if 'Simple Moving Average (SMA)' in indicators and sma is not None:
-        st.write(f'Simple Moving Average ({sma_window})')
-        st.line_chart(sma)
-    if 'Exponential Moving Average (EMA)' in indicators and ema is not None:
-        st.write(f'Exponential Moving Average ({ema_window})')
-        st.line_chart(ema)
-    if 'Weighted Moving Average (WMA)' in indicators and wma is not None:
-        st.write(f'Weighted Moving Average ({wma_window})')
-        st.line_chart(wma)
-    if 'Moving Average (MA)' in indicators and ma is not None:
-        st.write(f'Moving Average ({ma_window})')
-        st.line_chart(ma)
+    # Update layout for dual y-axis
+    fig.update_layout(
+        yaxis2=dict(
+            overlaying='y',
+            side='right',
+            showgrid=False
+        )
+    )
+
+    st.plotly_chart(fig)
 
 # Showing recent data:
 def dataframe():
