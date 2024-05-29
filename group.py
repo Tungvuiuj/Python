@@ -153,7 +153,7 @@ def model_engine(model, num):
     y = df.preds.values
     y = y[:-num]
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=5)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=10)
     model.fit(x_train, y_train)
     preds = model.predict(x_test)
     st.text(f'r2_score: {r2_score(y_test, preds)} \nMAE: {mean_absolute_error(y_test, preds)}')
@@ -172,7 +172,7 @@ def model_engine(model, num):
 
 # Creating interface for choosing learning model, prediction days, etc.
 def predict():
-    model_name = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'SVR', 'DecisionTreeRegressor', 'GradientBoostingRegressor', 'LightGBM', 'CatBoost', 'NeuralNetwork', 'NaiveBayes', 'LogisticRegression', 'KMeansClustering'])
+    model_name = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'SVR', 'DecisionTreeRegressor', 'GradientBoostingRegressor', 'LightGBM', 'CatBoost', 'NeuralNetwork'])
     num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
     if st.button('Predict'):
@@ -198,12 +198,6 @@ def predict():
             engine = CatBoostRegressor(verbose=0)
         elif model_name == 'NeuralNetwork':
             engine = MLPRegressor(max_iter=1000)
-        elif model_name == 'NaiveBayes':
-            engine = GaussianNB()
-        elif model_name == 'LogisticRegression':
-            engine = LogisticRegression()
-        elif model_name == 'KMeansClustering':
-            engine = KMeans(n_clusters=5)
 
         predicted_data = model_engine(engine, num)
         
