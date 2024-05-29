@@ -31,34 +31,25 @@ def main():
         predict()
         
 #Set up data downloading function from Yahoo Finance
-@st.cache
 def download_data(op, start_date, end_date):
-    try:
-        df = yf.download(op, start=start_date, end=end_date, progress=False)
-        if df.empty:
-            st.error(f"No data found for {op}. Please check the stock symbol and try again.")
-            return None
-        return df
-    except Exception as e:
-        st.error(f"Error fetching data for {op}: {e}")
-        return None
+    df = yf.download(op, start=start_date, end=end_date, progress=False)
+    return df
         
 #Set up input information from users
-option = st.sidebar.text_input('Enter a Stock Symbol', value='TSM')
+option = st.sidebar.text_input('Enter a Stock Symbol', value='SPY')
 option = option.upper()
 today = datetime.date.today()
-duration = st.sidebar.number_input('Enter the duration (days)', value=3000)
+duration = st.sidebar.number_input('Enter the duration', value=3000)
 before = today - datetime.timedelta(days=duration)
 start_date = st.sidebar.date_input('Start Date', value=before)
-end_date = st.sidebar.date_input('End Date', today)
+end_date = st.sidebar.date_input('End date', today)
 if st.sidebar.button('Send'):
     if start_date < end_date:
-        st.sidebar.success(f'Start date: `{start_date}`\n\nEnd date: `{end_date}`')
-        data = download_data(option, start_date, end_date)
+        st.sidebar.success('Start date: `%s`\n\nEnd date: `%s`' %(start_date, end_date))
+        download_data(option, start_date, end_date)
     else:
-        st.sidebar.error('Error: End date must be after start date')
+        st.sidebar.error('Error: End date must fall after start date')
 
-#Downloading data
 data = download_data(option, start_date, end_date)
 scaler = StandardScaler()
 
