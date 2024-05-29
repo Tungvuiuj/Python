@@ -100,14 +100,6 @@ def dataframe():
     st.dataframe(data.tail(20))
 
 #Showing future value estimation:
-    # Checking downloading data
-data = download_data(option, start_date, end_date)
-if data.empty:
-    st.error('No data found for the selected stock and date range.')
-
-    # Normalizing data
-scaler = StandardScaler()
-
 def model_engine(model, num):
     df = data[['Close']]
     df['preds'] = data.Close.shift(-num)
