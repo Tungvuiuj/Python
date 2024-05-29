@@ -40,7 +40,7 @@ def download_data(op, start_date, end_date):
     return df
 
 # Set up input information from users
-option = st.sidebar.text_input('Enter a Stock Symbol', value='TSM')
+option = st.sidebar.text_input('Enter a Stock Symbol', value='AAPL')
 option = option.upper()
 today = datetime.date.today()
 duration = st.sidebar.number_input('Enter the duration', value=3000)
@@ -57,24 +57,13 @@ if st.sidebar.button('Send'):
 data = download_data(option, start_date, end_date)
 scaler = StandardScaler()
 
-# Showing technical indicators (Close price, Volume, BB, MACD, RSI, SMA, EMA, WMA, CMF)
+# Showing technical indicators (Close price, Volume, BB, MACD, RSI, SMA, EMA, WMA, MA)
 def tech_indicators():
     st.header('Technical Indicators')
-    indicators = st.multiselect('Choose Technical Indicators to Visualize', [
-        'Close Price', 
-        'Volume',
-        'Bollinger Bands', 
-        'Moving Average Convergence Divergence', 
-        'Relative Strength Indicator', 
-        'Simple Moving Average (SMA)', 
-        'Exponential Moving Average (EMA)', 
-        'Weighted Moving Average (WMA)', 
-        'Moving Average (MA)', 
-        'Chaikin Money Flow'
-    ])
+    indicators = st.multiselect('Choose Technical Indicators to Visualize', ['Close Price', 'Volume','Bollinger Bands', 'Moving Average Convergence Divergence', 'Relative Strength Indicator', 'Simple Moving Average (SMA)', 'Exponential Moving Average (EMA)', 'Weighted Moving Average (WMA)', 'Moving Average (MA)'])
 
     # Calculating indicators
-    bb, macd, rsi, sma, ema, wma, ma, cmf = None, None, None, None, None, None, None, None
+    bb, macd, rsi, sma, ema, wma, ma = None, None, None, None, None, None, None
 
     if 'Bollinger Bands' in indicators:
         bb_indicator = BollingerBands(data.Close)
@@ -104,10 +93,6 @@ def tech_indicators():
         ma_window = st.number_input('Enter MA window:', min_value=1, value=50)
         ma = data['Close'].rolling(window=ma_window).mean()
 
-    if 'Chaikin Money Flow' in indicators:
-        cmf_window = st.number_input('Enter CMF window:', min_value=1, value=20)
-        cmf = ChaikinMoneyFlowIndicator(data.High, data.Low, data.Close, data.Volume, window=cmf_window).chaikin_money_flow()
-
     # Plotting selected indicators
     if 'Close Price' in indicators:
         st.write('Close Price')
@@ -136,9 +121,6 @@ def tech_indicators():
     if 'Moving Average (MA)' in indicators and ma is not None:
         st.write(f'Moving Average ({ma_window})')
         st.line_chart(ma)
-    if 'Chaikin Money Flow' in indicators and cmf is not None:
-        st.write(f'Chaikin Money Flow ({cmf_window})')
-        st.line_chart(cmf)
 
 # Showing recent data:
 def dataframe():
@@ -175,7 +157,7 @@ def model_engine(model, num):
 
 # Creating interface for choosing learning model, prediction days, etc.
 def predict():
-    model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'ARIMA', 'PROPHET'])
+    model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor'])
     num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
     if st.button('Predict'):
@@ -194,10 +176,6 @@ def predict():
         elif model == 'XGBoostRegressor':
             engine = XGBRegressor()
             predicted_data = model_engine(engine, num)
-        elif model == 'ARIMA':
-            predicted_data = arima_model(num)
-        else:
-            predicted_data = prophet_model(num)
         
         st.header('Predicted Stock Prices')
         st.line_chart(predicted_data.set_index('Date'))
