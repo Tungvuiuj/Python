@@ -36,7 +36,7 @@ def download_data(op, start_date, end_date):
     return df
         
 #Set up input information from users
-option = st.sidebar.text_input('Enter a Stock Symbol', value='SPY')
+option = st.sidebar.text_input('Enter a Stock Symbol', value='TSM')
 option = option.upper()
 today = datetime.date.today()
 duration = st.sidebar.number_input('Enter the duration', value=3000)
@@ -70,9 +70,9 @@ def tech_indicators():
     # RSI
     rsi = RSIIndicator(data.Close).rsi()
     # SMA
-    sma = SMAIndicator(data.Close, window=14).sma_indicator()
+    sma = SMAIndicator(data.Close, window=50).sma_indicator()
     # EMA
-    ema = EMAIndicator(data.Close).ema_indicator()
+    ema = EMAIndicator(data.Close, window=50).ema_indicator()
 
 
     if option == 'Close':
