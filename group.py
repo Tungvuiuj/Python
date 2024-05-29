@@ -60,18 +60,7 @@ scaler = StandardScaler()
 # Showing technical indicators (Close price, Volume, BB, MACD, RSI, SMA, EMA, WMA, CMF)
 def tech_indicators():
     st.header('Technical Indicators')
-    indicators = st.multiselect('Choose Technical Indicators to Visualize', [
-        'Close Price', 
-        'Volume',
-        'Bollinger Bands', 
-        'Moving Average Convergence Divergence', 
-        'Relative Strength Indicator', 
-        'Simple Moving Average (SMA)', 
-        'Exponential Moving Average (EMA)', 
-        'Weighted Moving Average (WMA)', 
-        'Moving Average (MA)', 
-        'Chaikin Money Flow'
-    ])
+    indicators = st.multiselect('Choose Technical Indicators to Visualize', ['Close Price', 'Volume','Bollinger Bands', 'Moving Average Convergence Divergence', 'Relative Strength Indicator', 'Simple Moving Average (SMA)', 'Exponential Moving Average (EMA)', 'Weighted Moving Average (WMA)', 'Moving Average (MA)',])
 
     # Calculating indicators
     bb, macd, rsi, sma, ema, wma, ma, cmf = None, None, None, None, None, None, None, None
@@ -104,10 +93,6 @@ def tech_indicators():
         ma_window = st.number_input('Enter MA window:', min_value=1, value=50)
         ma = data['Close'].rolling(window=ma_window).mean()
 
-    if 'Chaikin Money Flow' in indicators:
-        cmf_window = st.number_input('Enter CMF window:', min_value=1, value=20)
-        cmf = ChaikinMoneyFlowIndicator(data.High, data.Low, data.Close, data.Volume, window=cmf_window).chaikin_money_flow()
-
     # Plotting selected indicators
     if 'Close Price' in indicators:
         st.write('Close Price')
@@ -136,9 +121,6 @@ def tech_indicators():
     if 'Moving Average (MA)' in indicators and ma is not None:
         st.write(f'Moving Average ({ma_window})')
         st.line_chart(ma)
-    if 'Chaikin Money Flow' in indicators and cmf is not None:
-        st.write(f'Chaikin Money Flow ({cmf_window})')
-        st.line_chart(cmf)
 
 # Showing recent data:
 def dataframe():
