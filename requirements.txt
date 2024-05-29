@@ -1,6 +1,8 @@
 streamlit
+pandas
 yfinance
 ta
 scikit-learn
 xgboost
-pandas
+pmdarima
+prophet
