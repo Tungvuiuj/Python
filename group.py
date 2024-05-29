@@ -15,8 +15,16 @@ from sklearn.neighbors import KNeighborsRegressor
 from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
 from sklearn.metrics import r2_score, mean_absolute_error
-from pmdarima import auto_arima
-from prophet import Prophet
+from sklearn.svm import SVR
+from sklearn.neural_network import MLPRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+import lightgbm as lgb
+import catboost as cb
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.linear_model import LogisticRegression
+from sklearn.cluster import KMeans
+from sklearn.neighbors import KNeighborsRegressor
 
 # Set up the titles in Streamlit Application
 st.title('Welcome to the Predicting Future Stock Value Application')
@@ -156,7 +164,7 @@ def model_engine(model, num):
 
 # Creating interface for choosing learning model, prediction days, etc.
 def predict():
-    model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor',])
+    model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor','Support Vector Machines' ])
     num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
     if st.button('Predict'):
