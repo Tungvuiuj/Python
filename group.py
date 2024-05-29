@@ -156,7 +156,7 @@ def model_engine(model, num):
 
 # Creating interface for choosing learning model, prediction days, etc.
 def predict():
-    model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'ARIMA', 'PROPHET'])
+    model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor',])
     num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
     if st.button('Predict'):
@@ -175,10 +175,9 @@ def predict():
         elif model == 'XGBoostRegressor':
             engine = XGBRegressor()
             predicted_data = model_engine(engine, num)
-        elif model == 'ARIMA':
-            predicted_data = arima_model(num)
-        else:
-            predicted_data = prophet_model(num)
+        elif model == 'SVR':
+            engine = SVR()
+            predicted_data = model_engine(engine, num)
         
         st.header('Predicted Stock Prices')
         st.line_chart(predicted_data.set_index('Date'))
