@@ -19,8 +19,7 @@ from pmdarima import auto_arima
 from prophet import Prophet
 
 # Set up the titles in Streamlit Application
-st.title('Predicting Future Stock Value')
-st.sidebar.info('Welcome to the Predicting Future Stock Value Application')
+st.title('Welcome to the Predicting Future Stock Value Application')
 st.sidebar.info("This website was created and designed by [IUJ Group]")
 st.sidebar.info('Please fill the cells below:')
 
@@ -40,7 +39,7 @@ def download_data(op, start_date, end_date):
     return df
 
 # Set up input information from users
-option = st.sidebar.text_input('Enter a Stock Symbol', value='TSM')
+option = st.sidebar.text_input('Enter a Stock Symbol', value='AAPL')
 option = option.upper()
 today = datetime.date.today()
 duration = st.sidebar.number_input('Enter the duration', value=3000)
@@ -57,13 +56,13 @@ if st.sidebar.button('Send'):
 data = download_data(option, start_date, end_date)
 scaler = StandardScaler()
 
-# Showing technical indicators (Close price, Volume, BB, MACD, RSI, SMA, EMA, WMA, CMF)
+# Showing technical indicators (Close price, Volume, BB, MACD, RSI, SMA, EMA, WMA,MA)
 def tech_indicators():
     st.header('Technical Indicators')
     indicators = st.multiselect('Choose Technical Indicators to Visualize', ['Close Price', 'Volume','Bollinger Bands', 'Moving Average Convergence Divergence', 'Relative Strength Indicator', 'Simple Moving Average (SMA)', 'Exponential Moving Average (EMA)', 'Weighted Moving Average (WMA)', 'Moving Average (MA)',])
 
     # Calculating indicators
-    bb, macd, rsi, sma, ema, wma, ma, cmf = None, None, None, None, None, None, None, None
+    bb, macd, rsi, sma, ema, wma, ma = None, None, None, None, None, None, None
 
     if 'Bollinger Bands' in indicators:
         bb_indicator = BollingerBands(data.Close)
