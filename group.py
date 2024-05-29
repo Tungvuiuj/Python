@@ -138,7 +138,7 @@ def model_engine(model, num):
     y = df.preds.values
     y = y[:-num]
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=5)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=10)
     model.fit(x_train, y_train)
     preds = model.predict(x_test)
     st.text(f'r2_score: {r2_score(y_test, preds)} \nMAE: {mean_absolute_error(y_test, preds)}')
