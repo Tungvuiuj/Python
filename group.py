@@ -18,8 +18,7 @@ from pmdarima import auto_arima
 from prophet import Prophet
 
 #Set up the tittles in Streamlit Application
-st.title('Prediciting future stock value')
-st.sidebar.info('Welcome to the Predicting Future Stock Value Application')
+st.title('Welcome to the Predicting Future Stock Value Application')
 st.sidebar.info("This website was created and designed by [IUJ Group]")
 st.sidebar.info('Please fill the cells below:')
 
@@ -39,10 +38,10 @@ def download_data(op, start_date, end_date):
     return df
         
 #Set up input information from users
-option = st.sidebar.text_input('Enter a Stock Symbol', value='TSM')
+option = st.sidebar.text_input('Enter a Stock Symbol from Yahoo Finance', value='AAPL')
 option = option.upper()
 today = datetime.date.today()
-duration = st.sidebar.number_input('Enter the duration', value=3000)
+duration = st.sidebar.number_input('Enter the period', value=500)
 before = today - datetime.timedelta(days=duration)
 start_date = st.sidebar.date_input('Start Date', value=before)
 end_date = st.sidebar.date_input('End date', today)
@@ -59,7 +58,7 @@ scaler = StandardScaler()
 #Showing technical indicators (Close price,BB,MACD,RSI,SMA,EMA)
 def tech_indicators():
     st.header('Technical Indicators')
-    option = st.radio('Choose a Technical Indicator to Visualize', ['Close', 'BB', 'MACD', 'RSI', 'SMA', 'EMA'])
+    option = st.radio('Choose a Technical Indicator to Visualize', ['Close Price', 'Bollinger Bands', 'Moving Average Convergence Divergence', 'Relative Strength Indicator', 'Simple Moving Average (50)', 'Exponential Moving Average (50)'])
 
     # Bollinger bands
     bb_indicator = BollingerBands(data.Close)
@@ -78,19 +77,19 @@ def tech_indicators():
     ema = EMAIndicator(data.Close, window=50).ema_indicator()
 
 
-    if option == 'Close':
+    if option == 'Close Price':
         st.write('Close Price')
         st.line_chart(data.Close)
-    elif option == 'BB':
+    elif option == 'Bollinger Bands':
         st.write('BollingerBands')
         st.line_chart(bb)
-    elif option == 'MACD':
+    elif option == 'Moving Average Convergence Divergence':
         st.write('Moving Average Convergence Divergence')
         st.line_chart(macd)
-    elif option == 'RSI':
+    elif option == 'Relative Strength Indicator':
         st.write('Relative Strength Indicator')
         st.line_chart(rsi)
-    elif option == 'SMA':
+    elif option == 'Simple Moving Average (50)':
         st.write('Simple Moving Average')
         st.line_chart(sma)
     else:
@@ -113,7 +112,7 @@ def model_engine(model, num):
     y = df.preds.values
     y = y[:-num]
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=5)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=10)
     model.fit(x_train, y_train)
     preds = model.predict(x_test)
     st.text(f'r2_score: {r2_score(y_test, preds)} \nMAE: {mean_absolute_error(y_test, preds)}')
