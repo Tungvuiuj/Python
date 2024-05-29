@@ -10,10 +10,18 @@ import datetime
 from datetime import date
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.neighbors import KNeighborsRegressor
 from xgboost import XGBRegressor
-from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
+from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor, GradientBoostingRegressor
+from sklearn.svm import SVR
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.cluster import KMeans
+from sklearn.neural_network import MLPRegressor
+import lightgbm as lgb
+from catboost import CatBoostRegressor
 from sklearn.metrics import r2_score, mean_absolute_error
 from pmdarima import auto_arima
 from prophet import Prophet
@@ -134,7 +142,7 @@ def dataframe():
     st.header('Recent Data')
     st.dataframe(data.tail(20))
 
-# Showing future value estimation:
+# Function to train and evaluate models
 def model_engine(model, num):
     df = data[['Close']]
     df['preds'] = data.Close.shift(-num)
@@ -164,25 +172,40 @@ def model_engine(model, num):
 
 # Creating interface for choosing learning model, prediction days, etc.
 def predict():
-    model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor'])
+    model_name = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'SVR', 'DecisionTreeRegressor', 'GradientBoostingRegressor', 'LightGBM', 'CatBoost', 'NeuralNetwork', 'NaiveBayes', 'LogisticRegression', 'KMeansClustering'])
     num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
     if st.button('Predict'):
-        if model == 'LinearRegression':
+        if model_name == 'LinearRegression':
             engine = LinearRegression()
-            predicted_data = model_engine(engine, num)
-        elif model == 'RandomForestRegressor':
+        elif model_name == 'RandomForestRegressor':
             engine = RandomForestRegressor()
-            predicted_data = model_engine(engine, num)
-        elif model == 'ExtraTreesRegressor':
+        elif model_name == 'ExtraTreesRegressor':
             engine = ExtraTreesRegressor()
-            predicted_data = model_engine(engine, num)
-        elif model == 'KNeighborsRegressor':
+        elif model_name == 'KNeighborsRegressor':
             engine = KNeighborsRegressor()
-            predicted_data = model_engine(engine, num)
-        elif model == 'XGBoostRegressor':
+        elif model_name == 'XGBoostRegressor':
             engine = XGBRegressor()
-            predicted_data = model_engine(engine, num)
+        elif model_name == 'SVR':
+            engine = SVR()
+        elif model_name == 'DecisionTreeRegressor':
+            engine = DecisionTreeRegressor()
+        elif model_name == 'GradientBoostingRegressor':
+            engine = GradientBoostingRegressor()
+        elif model_name == 'LightGBM':
+            engine = lgb.LGBMRegressor()
+        elif model_name == 'CatBoost':
+            engine = CatBoostRegressor(verbose=0)
+        elif model_name == 'NeuralNetwork':
+            engine = MLPRegressor(max_iter=1000)
+        elif model_name == 'NaiveBayes':
+            engine = GaussianNB()
+        elif model_name == 'LogisticRegression':
+            engine = LogisticRegression()
+        elif model_name == 'KMeansClustering':
+            engine = KMeans(n_clusters=5)
+
+        predicted_data = model_engine(engine, num)
         
         st.header('Predicted Stock Prices')
         st.line_chart(predicted_data.set_index('Date'))
