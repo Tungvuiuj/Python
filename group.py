@@ -118,11 +118,7 @@ def model_engine(model, num):
     return predicted_data
 
 def predict():
-    model = st.radio('Choose a model', [
-        'LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 
-        'SVM', 'Neural Network', 'Gradient Boosting', 'LightGBM', 'CatBoost', 'Naive Bayes', 'Decision Tree',
-        'Logistic Regression', 'K-Means Clustering', 'Nearest Neighbors'
-    ])
+    model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'SVM', 'Neural Network', 'Gradient Boosting', 'LightGBM', 'CatBoost', 'Naive Bayes', 'Decision Tree','Logistic Regression', 'K-Means Clustering', 'Nearest Neighbors'])
     num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
     if st.button('Predict'):
