@@ -19,8 +19,7 @@ from pmdarima import auto_arima
 from prophet import Prophet
 
 # Set up the titles in Streamlit Application
-st.title('Predicting Future Stock Value')
-st.sidebar.info('Welcome to the Predicting Future Stock Value Application')
+st.title('Welcome to the Predicting Future Stock Value Application')
 st.sidebar.info("This website was created and designed by [IUJ Group]")
 st.sidebar.info('Please fill the cells below:')
 
