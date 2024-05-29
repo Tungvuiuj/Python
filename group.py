@@ -14,6 +14,8 @@ from sklearn.neighbors import KNeighborsRegressor
 from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
 from sklearn.metrics import r2_score, mean_absolute_error
+from pmdarima import auto_arima
+from prophet import Prophet
 
 #Set up the tittles in Streamlit Application
 st.title('Prediciting future stock value')
