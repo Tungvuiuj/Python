@@ -57,70 +57,66 @@ if st.sidebar.button('Send'):
 data = download_data(option, start_date, end_date)
 scaler = StandardScaler()
 
-# Showing technical indicators (Close price, BB, MACD, RSI, SMA, EMA, WMA,)
+# Showing technical indicators (Close price, Volume, BB, MACD, RSI, SMA, EMA, WMA, CMF)
 def tech_indicators():
     st.header('Technical Indicators')
-    indicators = st.multiselect('Choose Technical Indicators to Visualize', ['Close Price', 'Bollinger Bands', 'Moving Average Convergence Divergence', 'Relative Strength Indicator', 'Simple Moving Average (SMA)', 'Exponential Moving Average (EMA)', 'Weighted Moving Average (WMA)', 'Moving Average (MA)', 'Chaikin Money Flow'])
+    indicators = st.multiselect('Choose Technical Indicators to Visualize', [
+        'Close Price', 
+        'Volume',
+        'Bollinger Bands', 
+        'Moving Average Convergence Divergence', 
+        'Relative Strength Indicator', 
+        'Simple Moving Average (SMA)', 
+        'Exponential Moving Average (EMA)', 
+        'Weighted Moving Average (WMA)', 
+        'Moving Average (MA)', 
+        'Chaikin Money Flow'
+    ])
+
+    # Create a DataFrame to hold the indicators
+    indicators_df = pd.DataFrame(index=data.index)
 
     # Calculating indicators
-    bb, macd, rsi, sma, ema, wma, ma, cmf = None, None, None, None, None, None, None, None
+    if 'Close Price' in indicators:
+        indicators_df['Close Price'] = data['Close']
+    
+    if 'Volume' in indicators:
+        indicators_df['Volume'] = data['Volume']
 
     if 'Bollinger Bands' in indicators:
         bb_indicator = BollingerBands(data.Close)
-        bb = data[['Close']].copy()
-        bb['bb_h'] = bb_indicator.bollinger_hband()
-        bb['bb_l'] = bb_indicator.bollinger_lband()
+        indicators_df['Bollinger High'] = bb_indicator.bollinger_hband()
+        indicators_df['Bollinger Low'] = bb_indicator.bollinger_lband()
 
     if 'Moving Average Convergence Divergence' in indicators:
-        macd = MACD(data.Close).macd()
+        indicators_df['MACD'] = MACD(data.Close).macd()
 
     if 'Relative Strength Indicator' in indicators:
-        rsi = RSIIndicator(data.Close).rsi()
+        indicators_df['RSI'] = RSIIndicator(data.Close).rsi()
 
     if 'Simple Moving Average (SMA)' in indicators:
         sma_window = st.number_input('Enter SMA window:', min_value=1, value=50)
-        sma = SMAIndicator(data.Close, window=sma_window).sma_indicator()
+        indicators_df[f'SMA ({sma_window})'] = SMAIndicator(data.Close, window=sma_window).sma_indicator()
 
     if 'Exponential Moving Average (EMA)' in indicators:
         ema_window = st.number_input('Enter EMA window:', min_value=1, value=50)
-        ema = EMAIndicator(data.Close, window=ema_window).ema_indicator()
+        indicators_df[f'EMA ({ema_window})'] = EMAIndicator(data.Close, window=ema_window).ema_indicator()
 
     if 'Weighted Moving Average (WMA)' in indicators:
         wma_window = st.number_input('Enter WMA window:', min_value=1, value=50)
-        wma = WMAIndicator(data.Close, window=wma_window).wma()
+        indicators_df[f'WMA ({wma_window})'] = WMAIndicator(data.Close, window=wma_window).wma()
 
     if 'Moving Average (MA)' in indicators:
         ma_window = st.number_input('Enter MA window:', min_value=1, value=50)
-        ma = data['Close'].rolling(window=ma_window).mean()
+        indicators_df[f'MA ({ma_window})'] = data['Close'].rolling(window=ma_window).mean()
 
-    # Plotting selected indicators
-    if 'Close Price' in indicators:
-        st.write('Close Price')
-        st.line_chart(data.Close)
-    if 'Volume' in indicators:
-        st.write('Volume')
-        st.line_chart(data.Volume)
-    if 'Bollinger Bands' in indicators and bb is not None:
-        st.write('Bollinger Bands')
-        st.line_chart(bb)
-    if 'Moving Average Convergence Divergence' in indicators and macd is not None:
-        st.write('Moving Average Convergence Divergence')
-        st.line_chart(macd)
-    if 'Relative Strength Indicator' in indicators and rsi is not None:
-        st.write('Relative Strength Indicator')
-        st.line_chart(rsi)
-    if 'Simple Moving Average (SMA)' in indicators and sma is not None:
-        st.write(f'Simple Moving Average ({sma_window})')
-        st.line_chart(sma)
-    if 'Exponential Moving Average (EMA)' in indicators and ema is not None:
-        st.write(f'Exponential Moving Average ({ema_window})')
-        st.line_chart(ema)
-    if 'Weighted Moving Average (WMA)' in indicators and wma is not None:
-        st.write(f'Weighted Moving Average ({wma_window})')
-        st.line_chart(wma)
-    if 'Moving Average (MA)' in indicators and ma is not None:
-        st.write(f'Moving Average ({ma_window})')
-        st.line_chart(ma)
+    if 'Chaikin Money Flow' in indicators:
+        cmf_window = st.number_input('Enter CMF window:', min_value=1, value=20)
+        indicators_df[f'CMF ({cmf_window})'] = ChaikinMoneyFlowIndicator(data.High, data.Low, data.Close, data.Volume, window=cmf_window).chaikin_money_flow()
+
+    # Display the combined DataFrame with all selected indicators
+    st.write('Technical Indicators')
+    st.dataframe(indicators_df)
 
 # Showing recent data:
 def dataframe():
@@ -186,22 +182,24 @@ def predict():
 
 def arima_model(num):
     df = data[['Close']]
-    df = df.dropna()
-    model = auto_arima(df['Close'], seasonal=False, trace=True)
+    df['Date'] = data.index
+    df = df.set_index('Date')
+    model = auto_arima(df, seasonal=False)
     forecast = model.predict(n_periods=num)
-    forecast_dates = pd.date_range(end=end_date, periods=num + 1)[1:]
+    forecast_dates = pd.date_range(start=df.index[-1], periods=num + 1)[1:]
     predicted_data = pd.DataFrame({'Date': forecast_dates, 'Predicted Price': forecast})
     return predicted_data
 
 def prophet_model(num):
-    df = data[['Close']].reset_index()
-    df.rename(columns={'Date': 'ds', 'Close': 'y'}, inplace=True)
+    df = data[['Close']]
+    df['ds'] = data.index
+    df['y'] = df['Close']
+    df = df[['ds', 'y']]
     model = Prophet()
     model.fit(df)
     future = model.make_future_dataframe(periods=num)
     forecast = model.predict(future)
-    forecast_dates = forecast['ds'][-num:]
-    predicted_data = pd.DataFrame({'Date': forecast_dates, 'Predicted Price': forecast['yhat'][-num:].values})
+    predicted_data = forecast[['ds', 'yhat']].rename(columns={'ds': 'Date', 'yhat': 'Predicted Price'}).tail(num)
     return predicted_data
 
 # Run application
