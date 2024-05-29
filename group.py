@@ -170,7 +170,7 @@ def predict():
             predicted_data = model_engine(engine, num)
         elif model == 'ARIMA':
             predicted_data = arima_model(num)
-        else 
+        else:
             predicted_data = prophet_model(num)
         
 
