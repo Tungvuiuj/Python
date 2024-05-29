@@ -60,17 +60,7 @@ scaler = StandardScaler()
 # Showing technical indicators (Close price, BB, MACD, RSI, SMA, EMA, WMA, CMF)
 def tech_indicators():
     st.header('Technical Indicators')
-    option = st.radio('Choose a Technical Indicator to Visualize', [
-        'Close Price', 
-        'Bollinger Bands', 
-        'Moving Average Convergence Divergence', 
-        'Relative Strength Indicator', 
-        'Simple Moving Average (SMA)', 
-        'Exponential Moving Average (EMA)', 
-        'Weighted Moving Average (WMA)', 
-        'Moving Average (MA)', 
-        'Chaikin Money Flow'
-    ])
+    option = st.radio('Choose a Technical Indicator to Visualize', ['Close Price', 'Bollinger Bands', 'Moving Average Convergence Divergence', 'Relative Strength Indicator', 'Simple Moving Average (SMA)', 'Exponential Moving Average (EMA)', 'Weighted Moving Average (WMA)', 'Moving Average (MA)',])
 
     # Bollinger bands
     bb_indicator = BollingerBands(data.Close)
@@ -78,7 +68,7 @@ def tech_indicators():
     bb['bb_h'] = bb_indicator.bollinger_hband()
     bb['bb_l'] = bb_indicator.bollinger_lband()
     # Creating a new dataframe
-    bb = bb[['Close', 'bb_h', 'bb_l']]
+    bb = bb[['Close', 'upper', 'lower']]
     # MACD
     macd = MACD(data.Close).macd()
     # RSI
@@ -99,10 +89,6 @@ def tech_indicators():
     if option == 'Moving Average (MA)':
         ma_window = st.number_input('Enter MA window:', min_value=1, value=50)
         ma = data['Close'].rolling(window=ma_window).mean()
-    # CMF
-    if option == 'Chaikin Money Flow':
-        cmf_window = st.number_input('Enter CMF window:', min_value=1, value=20)
-        cmf = ChaikinMoneyFlowIndicator(data.High, data.Low, data.Close, data.Volume, window=cmf_window).chaikin_money_flow()
 
     if option == 'Close Price':
         st.write('Close Price')
@@ -128,9 +114,6 @@ def tech_indicators():
     elif option == 'Moving Average (MA)':
         st.write(f'Moving Average ({ma_window})')
         st.line_chart(ma)
-    elif option == 'Chaikin Money Flow':
-        st.write(f'Chaikin Money Flow ({cmf_window})')
-        st.line_chart(cmf)
 
 # Showing recent data:
 def dataframe():
@@ -148,7 +131,7 @@ def model_engine(model, num):
     y = df.preds.values
     y = y[:-num]
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=5)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=8)
     model.fit(x_train, y_train)
     preds = model.predict(x_test)
     st.text(f'r2_score: {r2_score(y_test, preds)} \nMAE: {mean_absolute_error(y_test, preds)}')
