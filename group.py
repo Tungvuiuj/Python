@@ -19,8 +19,9 @@ from prophet import Prophet
 
 #Set up the tittles in Streamlit Application
 st.title('Prediciting future stock value')
-st.sidebar.info('Welcome to the Predicting Future Stock Value Application. Choose your interest below')
-st.sidebar.info("Created and designed by [IUJ Group]")
+st.sidebar.info('Welcome to the Predicting Future Stock Value Application')
+st.sidebar.info("This website was created and designed by [IUJ Group]")
+st.sidebar.info('Please fill the cells below:')
 
 #Create main function in main interface with 3 categories "Visualize", "Recent Data" and "Predict"
 def main():
@@ -151,8 +152,8 @@ def prophet_model(num):
 
 #Creating interface for choosing learning model, prediction days,...
 def predict():
-    model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor'])
-    num = st.number_input('How many days forecast?', value=10)
+    model = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'ARIMA','PROPHET'])
+    num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
     if st.button('Predict'):
         if model == 'LinearRegression':
