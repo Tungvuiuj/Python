@@ -165,9 +165,14 @@ def predict():
         elif model == 'KNeighborsRegressor':
             engine = KNeighborsRegressor()
             predicted_data = model_engine(engine, num)
-        else:
+        elif model == 'XGBoostRegressor':
             engine = XGBRegressor()
             predicted_data = model_engine(engine, num)
+        elif model == 'ARIMA':
+            predicted_data = arima_model(num)
+        elif model == 'Prophet':
+            predicted_data = prophet_model(num)
+        
 
         st.header('Predicted Stock Prices')
         st.line_chart(predicted_data.set_index('Date'))
