@@ -137,32 +137,6 @@ def dataframe():
     st.header('Recent Data')
     st.dataframe(data.tail(20))
 
-# Function to train model on full data and predict future values
-def model_engine_full(model, num):
-    df = data[['Close']]
-    x = df.values
-    x = scaler.fit_transform(x)
-
-    # Fit the model on the entire dataset
-    model.fit(x, df['Close'].values)
-
-    # Create future dates starting from the last known date
-    future_dates = pd.date_range(start=data.index[-1], periods=num + 1, freq='B')[1:]
-
-    # Generate future predictions
-    future_predictions = []
-    last_known_value = x[-1].reshape(1, -1)  # Start with the last known value
-    for _ in range(num):
-        next_pred = model.predict(last_known_value)[0]
-        future_predictions.append(next_pred)
-        # Update the last known value with the new prediction
-        last_known_value = scaler.transform([[next_pred]])
-
-    # Prepare the predicted data
-    predicted_data = pd.DataFrame({'Date': future_dates, 'Predicted Price': future_predictions})
-
-    return predicted_data
-
 # Function to train and evaluate models with train-test split
 def model_engine(model, num):
     df = data[['Close']]
@@ -186,39 +160,14 @@ def model_engine(model, num):
         predictions.append(i)
         day += 1
 
-    forecast_dates = pd.date_range(end=end_date, periods=num + 1)[1:]
+    forecast_dates = pd.date_range(start=data.index[-1], periods=num + 1, freq='B')[1:]
     predicted_data = pd.DataFrame({'Date': forecast_dates, 'Predicted Price': predictions})
 
     return predicted_data 
 
-# Function to train model on full data and predict future values
-def model_engine_full(model, num):
-    df = data[['Close']]
-    x = df.values
-    x = scaler.fit_transform(x)
-
-    # Fit the model on the entire dataset
-    model.fit(x, df['Close'].values)
-
-    # Create future dates
-    future_dates = pd.date_range(end=end_date, periods=num + 1)[1:]
-
-    # Generate future predictions
-    future_predictions = []
-    last_known_value = x[-1].reshape(1, -1)
-    for _ in range(num):
-        next_pred = model.predict(last_known_value)[0]
-        future_predictions.append(next_pred)
-        last_known_value = scaler.transform([[next_pred]])
-
-    # Prepare the predicted data
-    predicted_data = pd.DataFrame({'Date': future_dates, 'Predicted Price': future_predictions})
-
-    return predicted_data
 
 # Creating interface for choosing learning model, prediction days, etc.
 def predict():
-    method = st.radio('Choose prediction method', ['Train-Test Split', 'Full Data'])
     model_name = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'SVR', 'DecisionTreeRegressor', 'GradientBoostingRegressor', 'LightGBM', 'CatBoost'])
     num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
@@ -243,11 +192,6 @@ def predict():
             engine = lgb.LGBMRegressor()
         elif model_name == 'CatBoost':
             engine = CatBoostRegressor(verbose=0)
-
-        if method == 'Train-Test Split':
-            predicted_data = model_engine(engine, num)
-        else:
-            predicted_data = model_engine_full(engine, num)
         
         st.header('Predicted Stock Prices')
         st.line_chart(predicted_data.set_index('Date'))
