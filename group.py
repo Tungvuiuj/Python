@@ -69,31 +69,27 @@ def tech_indicators():
 
     # Plot SMA
     if 'Simple Moving Average (SMA)' in indicators:
-        sma_windows = st.text_input('Enter SMA windows (comma-separated):', '50,200')
-        for window in map(int, sma_windows.split(',')):
-            data[f'sma_{window}'] = SMAIndicator(data.Close, window=window).sma_indicator()
-            fig.add_trace(go.Scatter(x=data.index, y=data[f'sma_{window}'], mode='lines', name=f'SMA {window}'))
+        sma_window = st.number_input('Enter SMA window:', min_value=1, value=50)
+        data['sma'] = SMAIndicator(data.Close, window=sma_window).sma_indicator()
+        fig.add_trace(go.Scatter(x=data.index, y=data['sma'], mode='lines', name=f'SMA {sma_window}'))
 
     # Plot EMA
     if 'Exponential Moving Average (EMA)' in indicators:
-        ema_windows = st.text_input('Enter EMA windows (comma-separated):', '50,200')
-        for window in map(int, ema_windows.split(',')):
-            data[f'ema_{window}'] = EMAIndicator(data.Close, window=window).ema_indicator()
-            fig.add_trace(go.Scatter(x=data.index, y=data[f'ema_{window}'], mode='lines', name=f'EMA {window}'))
+        ema_window = st.number_input('Enter EMA window:', min_value=1, value=50)
+        data['ema'] = EMAIndicator(data.Close, window=ema_window).ema_indicator()
+        fig.add_trace(go.Scatter(x=data.index, y=data['ema'], mode='lines', name=f'EMA {ema_window}'))
 
     # Plot WMA
     if 'Weighted Moving Average (WMA)' in indicators:
-        wma_windows = st.text_input('Enter WMA windows (comma-separated):', '50,200')
-        for window in map(int, wma_windows.split(',')):
-            data[f'wma_{window}'] = WMAIndicator(data.Close, window=window).wma()
-            fig.add_trace(go.Scatter(x=data.index, y=data[f'wma_{window}'], mode='lines', name=f'WMA {window}'))
+        wma_window = st.number_input('Enter WMA window:', min_value=1, value=50)
+        data['wma'] = WMAIndicator(data.Close, window=wma_window).wma()
+        fig.add_trace(go.Scatter(x=data.index, y=data['wma'], mode='lines', name=f'WMA {wma_window}'))
 
     # Plot MA
     if 'Moving Average (MA)' in indicators:
-        ma_windows = st.text_input('Enter MA windows (comma-separated):', '50,200')
-        for window in map(int, ma_windows.split(',')):
-            data[f'ma_{window}'] = data['Close'].rolling(window=window).mean()
-            fig.add_trace(go.Scatter(x=data.index, y=data[f'ma_{window}'], mode='lines', name=f'MA {window}'))
+        ma_window = st.number_input('Enter MA window:', min_value=1, value=50)
+        data['ma'] = data['Close'].rolling(window=ma_window).mean()
+        fig.add_trace(go.Scatter(x=data.index, y=data['ma'], mode='lines', name=f'MA {ma_window}'))
 
     st.plotly_chart(fig)
 
@@ -137,32 +133,6 @@ def dataframe():
     st.header('Recent Data')
     st.dataframe(data.tail(20))
 
-# Function to train model on full data and predict future values
-def model_engine_full(model, num):
-    df = data[['Close']]
-    x = df.values
-    x = scaler.fit_transform(x)
-
-    # Fit the model on the entire dataset
-    model.fit(x, df['Close'].values)
-
-    # Create future dates starting from the last known date
-    future_dates = pd.date_range(start=data.index[-1], periods=num + 1, freq='B')[1:]
-
-    # Generate future predictions
-    future_predictions = []
-    last_known_value = x[-1].reshape(1, -1)  # Start with the last known value
-    for _ in range(num):
-        next_pred = model.predict(last_known_value)[0]
-        future_predictions.append(next_pred)
-        # Update the last known value with the new prediction
-        last_known_value = scaler.transform([[next_pred]])
-
-    # Prepare the predicted data
-    predicted_data = pd.DataFrame({'Date': future_dates, 'Predicted Price': future_predictions})
-
-    return predicted_data
-
 # Function to train and evaluate models
 def model_engine(model, num):
     df = data[['Close']]
@@ -193,7 +163,6 @@ def model_engine(model, num):
 
 # Creating interface for choosing learning model, prediction days, etc.
 def predict():
-    method = st.radio('Choose prediction method', ['Train-Test Split', 'Full Data'])
     model_name = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'SVR', 'DecisionTreeRegressor', 'GradientBoostingRegressor', 'LightGBM', 'CatBoost'])
     num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
@@ -219,14 +188,10 @@ def predict():
         elif model_name == 'CatBoost':
             engine = CatBoostRegressor(verbose=0)
 
-        if method == 'Train-Test Split':
-            predicted_data = model_engine(engine, num)
-        else:
-            predicted_data = model_engine_full(engine, num)
+        predicted_data = model_engine(engine, num)
         
         st.header('Predicted Stock Prices')
         st.line_chart(predicted_data.set_index('Date'))
 
 if __name__ == '__main__':
     main()
-
