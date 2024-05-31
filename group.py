@@ -1,13 +1,10 @@
-# Import necessary libraries
 import streamlit as st
 import pandas as pd
 import yfinance as yf
 from ta.volatility import BollingerBands
 from ta.trend import MACD, EMAIndicator, SMAIndicator, WMAIndicator
 from ta.momentum import RSIIndicator
-from ta.volume import ChaikinMoneyFlowIndicator
 import datetime
-from datetime import date
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, LogisticRegression
@@ -16,15 +13,9 @@ from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor, GradientBoostingRegressor
 from sklearn.svm import SVR
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.cluster import KMeans
-from sklearn.neural_network import MLPRegressor
 import lightgbm as lgb
 from catboost import CatBoostRegressor
 from sklearn.metrics import r2_score, mean_absolute_error
-from pmdarima import auto_arima
-from prophet import Prophet
 import plotly.graph_objects as go
 
 # Set up the titles in Streamlit Application
@@ -58,7 +49,7 @@ end_date = st.sidebar.date_input('End date', today)
 if st.sidebar.button('Send'):
     if start_date < end_date:
         st.sidebar.success('Start date: `%s`\n\nEnd date: `%s`' % (start_date, end_date))
-        download_data(option, start_date, end_date)
+        data = download_data(option, start_date, end_date)
     else:
         st.sidebar.error('Error: End date must fall after start date')
 
@@ -78,31 +69,27 @@ def tech_indicators():
 
     # Plot SMA
     if 'Simple Moving Average (SMA)' in indicators:
-        sma_windows = st.text_input('Enter SMA windows (comma-separated):', '50,200')
-        for window in map(int, sma_windows.split(',')):
-            data[f'sma_{window}'] = SMAIndicator(data.Close, window=window).sma_indicator()
-            fig.add_trace(go.Scatter(x=data.index, y=data[f'sma_{window}'], mode='lines', name=f'SMA {window}'))
+        sma_window = st.number_input('Enter SMA window:', min_value=1, value=50)
+        data['sma'] = SMAIndicator(data.Close, window=sma_window).sma_indicator()
+        fig.add_trace(go.Scatter(x=data.index, y=data['sma'], mode='lines', name=f'SMA {sma_window}'))
 
     # Plot EMA
     if 'Exponential Moving Average (EMA)' in indicators:
-        ema_windows = st.text_input('Enter EMA windows (comma-separated):', '50,200')
-        for window in map(int, ema_windows.split(',')):
-            data[f'ema_{window}'] = EMAIndicator(data.Close, window=window).ema_indicator()
-            fig.add_trace(go.Scatter(x=data.index, y=data[f'ema_{window}'], mode='lines', name=f'EMA {window}'))
+        ema_window = st.number_input('Enter EMA window:', min_value=1, value=50)
+        data['ema'] = EMAIndicator(data.Close, window=ema_window).ema_indicator()
+        fig.add_trace(go.Scatter(x=data.index, y=data['ema'], mode='lines', name=f'EMA {ema_window}'))
 
     # Plot WMA
     if 'Weighted Moving Average (WMA)' in indicators:
-        wma_windows = st.text_input('Enter WMA windows (comma-separated):', '50,200')
-        for window in map(int, wma_windows.split(',')):
-            data[f'wma_{window}'] = WMAIndicator(data.Close, window=window).wma()
-            fig.add_trace(go.Scatter(x=data.index, y=data[f'wma_{window}'], mode='lines', name=f'WMA {window}'))
+        wma_window = st.number_input('Enter WMA window:', min_value=1, value=50)
+        data['wma'] = WMAIndicator(data.Close, window=wma_window).wma()
+        fig.add_trace(go.Scatter(x=data.index, y=data['wma'], mode='lines', name=f'WMA {wma_window}'))
 
     # Plot MA
     if 'Moving Average (MA)' in indicators:
-        ma_windows = st.text_input('Enter MA windows (comma-separated):', '50,200')
-        for window in map(int, ma_windows.split(',')):
-            data[f'ma_{window}'] = data['Close'].rolling(window=window).mean()
-            fig.add_trace(go.Scatter(x=data.index, y=data[f'ma_{window}'], mode='lines', name=f'MA {window}'))
+        ma_window = st.number_input('Enter MA window:', min_value=1, value=50)
+        data['ma'] = data['Close'].rolling(window=ma_window).mean()
+        fig.add_trace(go.Scatter(x=data.index, y=data['ma'], mode='lines', name=f'MA {ma_window}'))
 
     st.plotly_chart(fig)
 
@@ -146,7 +133,33 @@ def dataframe():
     st.header('Recent Data')
     st.dataframe(data.tail(20))
 
-# Function to train and evaluate models with train-test split
+# Function to train model on full data and predict future values
+def model_engine_full(model, num):
+    df = data[['Close']]
+    x = df.values
+    x = scaler.fit_transform(x)
+
+    # Fit the model on the entire dataset
+    model.fit(x, df['Close'].values)
+
+    # Create future dates starting from the last known date
+    future_dates = pd.date_range(start=data.index[-1], periods=num + 1, closed='right')
+
+    # Generate future predictions
+    future_predictions = []
+    last_known_value = x[-1].reshape(1, -1)  # Start with the last known value
+    for _ in range(num):
+        next_pred = model.predict(last_known_value)[0]
+        future_predictions.append(next_pred)
+        # Update the last known value with the new prediction
+        last_known_value = scaler.transform([[next_pred]])
+
+    # Prepare the predicted data
+    predicted_data = pd.DataFrame({'Date': future_dates, 'Predicted Price': future_predictions})
+
+    return predicted_data
+
+# Function to train and evaluate models
 def model_engine(model, num):
     df = data[['Close']]
     df['preds'] = data.Close.shift(-num)
@@ -173,31 +186,6 @@ def model_engine(model, num):
     predicted_data = pd.DataFrame({'Date': forecast_dates, 'Predicted Price': predictions})
 
     return predicted_data 
-
-# Function to train model on full data and predict future values
-def model_engine_full(model, num):
-    df = data[['Close']]
-    x = df.values
-    x = scaler.fit_transform(x)
-
-    # Fit the model on the entire dataset
-    model.fit(x, df['Close'].values)
-
-    # Create future dates
-    future_dates = pd.date_range(end=end_date, periods=num + 1)[1:]
-
-    # Generate future predictions
-    future_predictions = []
-    last_known_value = x[-1].reshape(1, -1)
-    for _ in range(num):
-        next_pred = model.predict(last_known_value)[0]
-        future_predictions.append(next_pred)
-        last_known_value = scaler.transform([[next_pred]])
-
-    # Prepare the predicted data
-    predicted_data = pd.DataFrame({'Date': future_dates, 'Predicted Price': future_predictions})
-
-    return predicted_data
 
 # Creating interface for choosing learning model, prediction days, etc.
 def predict():
@@ -237,4 +225,3 @@ def predict():
 
 if __name__ == '__main__':
     main()
-
