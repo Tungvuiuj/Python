@@ -131,7 +131,8 @@ def tech_indicators():
 # Showing recent data:
 def dataframe():
     st.header('Recent Data')
-    st.dataframe(data.tail(20))
+    num_days = st.number_input('Enter number of days to display', min_value=1, value=20)
+    st.dataframe(data.tail(num_days))
 
 # Function to train and evaluate models
 def model_engine(model, num):
@@ -163,7 +164,7 @@ def model_engine(model, num):
 
 # Creating interface for choosing learning model, prediction days, etc.
 def predict():
-    model_name = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'SVR', 'DecisionTreeRegressor', 'GradientBoostingRegressor', 'LightGBM', 'CatBoost'])
+    model_name = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'SVR', 'DecisionTreeRegressor', 'GradientBoostingRegressor', 'LightGBM', 'CatBoost', 'LogisticRegression'])
     num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
     if st.button('Predict'):
@@ -187,6 +188,8 @@ def predict():
             engine = lgb.LGBMRegressor()
         elif model_name == 'CatBoost':
             engine = CatBoostRegressor(verbose=0)
+        elif model_name == 'LogisticRegression':
+            engine = LogisticRegression()
 
         predicted_data = model_engine(engine, num)
         
