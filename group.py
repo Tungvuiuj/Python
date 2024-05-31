@@ -143,7 +143,7 @@ def model_engine_full(model, num):
     model.fit(x, df['Close'].values)
 
     # Create future dates starting from the last known date
-    future_dates = pd.date_range(start=data.index[-1], periods=num + 1, closed='right')
+    future_dates = pd.date_range(start=data.index[-1], periods=num + 1, freq='B')[1:]
 
     # Generate future predictions
     future_predictions = []
@@ -182,7 +182,7 @@ def model_engine(model, num):
         predictions.append(i)
         day += 1
 
-    forecast_dates = pd.date_range(end=end_date, periods=num + 1)[1:]
+    forecast_dates = pd.date_range(start=data.index[-1], periods=num + 1, freq='B')[1:]
     predicted_data = pd.DataFrame({'Date': forecast_dates, 'Predicted Price': predictions})
 
     return predicted_data 
