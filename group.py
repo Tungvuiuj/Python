@@ -164,7 +164,7 @@ def model_engine(model, num):
 
 # Creating interface for choosing learning model, prediction days, etc.
 def predict():
-    model_name = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'SVR', 'DecisionTreeRegressor', 'GradientBoostingRegressor', 'LightGBM', 'CatBoost', 'LogisticRegression'])
+    model_name = st.radio('Choose a model', ['LinearRegression', 'RandomForestRegressor', 'ExtraTreesRegressor', 'KNeighborsRegressor', 'XGBoostRegressor', 'SVR', 'DecisionTreeRegressor', 'GradientBoostingRegressor', 'LightGBM', 'CatBoost'])
     num = st.number_input('How many days do you want to forecast?', value=10)
     num = int(num)
     if st.button('Predict'):
@@ -188,8 +188,6 @@ def predict():
             engine = lgb.LGBMRegressor()
         elif model_name == 'CatBoost':
             engine = CatBoostRegressor(verbose=0)
-        elif model_name == 'LogisticRegression':
-            engine = LogisticRegression()
 
         predicted_data = model_engine(engine, num)
         
