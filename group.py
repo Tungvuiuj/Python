@@ -19,7 +19,7 @@ from sklearn.metrics import r2_score, mean_absolute_error
 import plotly.graph_objects as go
 
 # Set up the titles in Streamlit Application
-st.title('Welcome to the Predicting Future Stock Value Application')
+st.title('Welcome to the Stock Technical Analysis Application')
 st.sidebar.info("This website was created and designed by [IUJ Group]")
 st.sidebar.info('Please fill the cells below:')
 
