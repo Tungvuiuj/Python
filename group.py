@@ -20,7 +20,7 @@ import plotly.graph_objects as go
 
 # Set up the titles in Streamlit Application
 st.title('Welcome to the Stock Technical Analysis Application')
-st.sidebar.info("This website was created and designed by [IUJ Group]")
+st.sidebar.info("This website was created and designed by IUJ's Python Group")
 st.sidebar.info('Please fill the cells below:')
 
 # Create main function in main interface with 3 categories "Visualize", "Recent Data" and "Predict"
